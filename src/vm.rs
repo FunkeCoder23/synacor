@@ -1,3 +1,5 @@
+const DEBUG: bool = true;
+
 /// == Architecture ==
 /// - three storage regions
 /// - memory with 15-bit address space storing 16-bit values
@@ -44,7 +46,26 @@ impl VM {
                     continue;
                 }
                 Opcode::OUT => {
-                    println!("need to print <a> here :\\");
+                    let ch = self.next_bits() as u8 as char;
+                    if DEBUG {
+                        println!("OUT called\nPrinting {:?} to terminal", ch);
+                    }
+                    print!("{}", ch);
+                }
+                Opcode::ADD => {
+                    let dest = self.next_bits() % 32768;
+                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let (is_lit_b, b) = VM::check_num(self.next_bits());
+
+                    let val_a = if is_lit_a { a } else { self.memory[a as usize] };
+                    let val_b = if is_lit_b { b } else { self.memory[b as usize] };
+                    if DEBUG {
+                        println!(
+                            "ADD called\n Adding {}({}) and {}({}) and storing in {}",
+                            val_a, a, val_b, b, dest
+                        )
+                    }
+                    self.memory[dest as usize] = val_a + val_b;
                 }
                 _ => {
                     println!("Unrecognized opcode found! Terminating!");
@@ -54,10 +75,31 @@ impl VM {
         }
     }
 
+    /// format_num: returns if num is literal and the value
+    ///
+    /// - each number is stored as a 16-bit little-endian pair (low byte, high byte)
+    /// - numbers 0..32767 mean a literal value
+    /// - numbers 32768..32775 instead mean registers 0..7
+    /// - numbers 32776..65535 are invalid
+    fn check_num(num: u16) -> (bool, u16) {
+        let mut is_lit = false;
+        if num < 32767 {
+            is_lit = true;
+        } else if num > 32776 {
+            panic!("Invalid number");
+        }
+        (is_lit, num % 32768)
+    }
     fn decode_opcode(&mut self) -> Opcode {
         let opcode = Opcode::from(self.program[self.pc]);
         self.pc += 1;
         return opcode;
+    }
+
+    fn next_bits(&mut self) -> u16 {
+        let result = self.program[self.pc];
+        self.pc += 1;
+        result
     }
 }
 
