@@ -45,10 +45,16 @@ impl VM {
                 Opcode::NOOP => {
                     continue;
                 }
+                Opcode::RET => {
+                    self.pc = match self.stack.pop() {
+                        Some(val) => val as usize,
+                        None => return,
+                    };
+                }
                 Opcode::OUT => {
                     let ch = self.next_bits() as u8 as char;
                     if DEBUG {
-                        println!("OUT called\nPrinting {:?} to terminal", ch);
+                        println!("OUT called\n\tPrinting {:?} to terminal", ch);
                     }
                     print!("{}", ch);
                 }
@@ -61,7 +67,7 @@ impl VM {
                     let val_b = if is_lit_b { b } else { self.memory[b as usize] };
                     if DEBUG {
                         println!(
-                            "ADD called\n Adding {}({}) and {}({}) and storing in {}",
+                            "ADD called\n\tAdding {}({}) and {}({}) and storing in {}",
                             val_a, a, val_b, b, dest
                         )
                     }
