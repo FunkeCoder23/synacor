@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 
+mod debug;
 pub mod instruction;
 mod vm;
 

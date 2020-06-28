@@ -8,16 +8,14 @@ const DEBUG: bool = true;
 /// - all numbers are unsigned integers 0..32767 (15-bit)
 /// - all math is modulo 32768; 32758 + 15 => 5
 use crate::instruction::*;
-use std::fs::File;
 use std::io;
-use std::io::Write;
 
 #[allow(dead_code)]
 pub struct VM {
-    registers: [u16; 8],
-    stack: Vec<u16>,
-    memory: [u16; 32768],
-    pc: usize,
+    pub registers: [u16; 8],
+    pub stack: Vec<u16>,
+    pub memory: [u16; 32768],
+    pub pc: usize,
 }
 
 #[allow(dead_code)]
@@ -462,7 +460,7 @@ impl VM {
     /// - numbers 0..32767 mean a literal value
     /// - numbers 32768..32775 instead mean registers 0..7
     /// - numbers 32776..65535 are invalid
-    fn check_num(num: u16) -> (bool, u16) {
+    pub fn check_num(num: u16) -> (bool, u16) {
         let mut is_lit = false;
         if num < 32767 {
             is_lit = true;
@@ -471,32 +469,16 @@ impl VM {
         }
         (is_lit, num % 32768)
     }
-    fn decode_opcode(&mut self) -> Opcode {
+    pub fn decode_opcode(&mut self) -> Opcode {
         let opcode = Opcode::from(self.memory[self.pc]);
         self.pc += 1;
         return opcode;
     }
 
-    fn next_bits(&mut self) -> u16 {
+    pub fn next_bits(&mut self) -> u16 {
         let result = self.memory[self.pc];
         self.pc += 1;
         result
-    }
-    pub fn dump(&self, output: &mut File) {
-        for i in 0..self.memory.len() {
-            let word = self.memory[i];
-            let mut text = Vec::new();
-            for ch in format!("{}", word).bytes() {
-                text.push(ch);
-            }
-            output.write(" ".as_bytes()).unwrap();
-            output.write(&text.as_slice()).unwrap();
-            output.write(",\n".as_bytes()).unwrap();
-            // // print!("{},\n", &W(text.clone()));
-            // // for outbyte in outbuffer {
-            // //     fileout.write(&outbuffer).unwrap();
-            // // }
-        }
     }
 }
 
