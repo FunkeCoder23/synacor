@@ -453,9 +453,9 @@ impl VM {
                             .read_line(&mut input)
                             .expect("Did not enter a correct string");
                     }
-                    if input == "set teleport" {
-                        self.registers[7] += 1;
-                        input = "use teleport".to_string();
+                    let v: String = input.matches(char::is_numeric).collect();
+                    if v.is_empty() == false {
+                        self.registers[7] = v.parse().unwrap();
                     }
                     let ch = input.remove(0);
                     if DEBUG {
