@@ -112,10 +112,10 @@ pub enum Opcode {
     ///   no operation
     NOOP,
 
-    /// IGL: ~
+    /// UNK(u16): ~
     ///
-    /// unfound opcode
-    IGL,
+    /// unknown opcode
+    UNK(u16),
 }
 
 #[allow(dead_code)]
@@ -154,7 +154,7 @@ impl From<u16> for Opcode {
             19 => return Opcode::OUT,
             20 => return Opcode::IN,
             21 => return Opcode::NOOP,
-            _ => return Opcode::IGL,
+            val => return Opcode::UNK(val),
         }
     }
 }
