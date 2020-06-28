@@ -1,4 +1,4 @@
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 
 /// == Architecture ==
 /// - three storage regions
@@ -8,7 +8,9 @@ const DEBUG: bool = true;
 /// - all numbers are unsigned integers 0..32767 (15-bit)
 /// - all math is modulo 32768; 32758 + 15 => 5
 use crate::instruction::*;
+#[allow(unused_imports)]
 use std::io;
+use std::io::Write;
 
 #[allow(dead_code)]
 pub struct VM {
@@ -367,13 +369,19 @@ impl VM {
                     self.registers[reg_a as usize] = val_b;
                 }
                 Opcode::WMEM => {
-                    let mem_a = self.next_bits() % 32768;
+                    let (is_lit_a, a) = VM::check_num(self.next_bits());
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
 
                     let val_b = if is_lit_b {
                         b
                     } else {
                         self.registers[b as usize]
+                    };
+
+                    let mem_a = if is_lit_a {
+                        a
+                    } else {
+                        self.registers[a as usize]
                     };
 
                     if DEBUG {
@@ -435,14 +443,18 @@ impl VM {
                     }
                 }
                 Opcode::IN => {
-                    //TODO
-                    match io::stdin().read_line(&mut input) {
-                        Ok(n) => {
-                            println!("{} bytes read", n);
-                            println!("{}", input);
-                        }
-                        Err(error) => println!("error: {}", error),
+                    // //TODO
+                    let reg_a = self.next_bits() % 32768;
+                    // print!("> ");
+                    // let _ = io::stdout().flush();
+                    if input.is_empty() {
+                        io::stdin()
+                            .read_line(&mut input)
+                            .expect("Did not enter a correct string");
                     }
+                    let ch = input.remove(0);
+                    println!("{}: IN called\n\tStoring {} in {}", self.pc, ch, reg_a);
+                    self.registers[reg_a as usize] = ch as u16;
                 }
                 Opcode::NOOP => {
                     if DEBUG {
