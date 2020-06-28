@@ -107,7 +107,7 @@ impl VM {
                     let val_c = if is_lit_c {
                         c
                     } else {
-                        self.registers[b as usize]
+                        self.registers[c as usize]
                     };
 
                     if DEBUG {
@@ -132,7 +132,7 @@ impl VM {
                     let val_c = if is_lit_c {
                         c
                     } else {
-                        self.registers[b as usize]
+                        self.registers[c as usize]
                     };
                     if DEBUG {
                         println!(
@@ -255,7 +255,8 @@ impl VM {
                           val_b, b, val_c, c, reg_a
                       );
                     }
-                    self.registers[reg_a as usize] = (val_b * val_c) % 32768;
+                    let mult = val_b as u32 * val_c as u32;
+                    self.registers[reg_a as usize] = (mult % 32768) as u16;
                 }
                 Opcode::MOD => {
                     let reg_a = self.next_bits() % 32768;
@@ -351,7 +352,11 @@ impl VM {
                     let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
 
-                    let val_b = if is_lit_b { b } else { self.memory[b as usize] };
+                    let val_b = if is_lit_b {
+                        self.memory[b as usize]
+                    } else {
+                        self.memory[self.registers[b as usize] as usize]
+                    };
 
                     if DEBUG {
                         println!(
@@ -462,7 +467,7 @@ impl VM {
     /// - numbers 32776..65535 are invalid
     pub fn check_num(num: u16) -> (bool, u16) {
         let mut is_lit = false;
-        if num < 32767 {
+        if num < 32768 {
             is_lit = true;
         } else if num > 32776 {
             panic!("Invalid number");

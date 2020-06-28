@@ -124,13 +124,7 @@ impl vm::VM {
                 }
 
                 val => {
-                    writeln!(
-                        output,
-                        "Unrecognized opcode ({:?}) found! Terminating!",
-                        val
-                    )
-                    .unwrap();
-                    return;
+                    writeln!(output, "Unrecognized opcode ({:?}) found!", val).unwrap();
                 }
             }
         }
@@ -151,7 +145,7 @@ fn test_dump() {
         // println!("Programming {} into {}", word, i / 2);
         arch_vm.program(word, i / 2);
     }
-    // let mut fileout = File::create("challenge2.txt").unwrap();
-    // arch_vm.dump(&mut fileout);
+    let mut fileout = File::create("debug.txt").unwrap();
+    arch_vm.dump(&mut fileout);
     // println!("{:?}", &buffer[..]);
 }
