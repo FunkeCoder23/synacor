@@ -1,9 +1,10 @@
 [package]
-name = "synacor"
-version = "0.1.0"
-authors = ["funkecoder"]
+authors = [ "funkecoder" ]
 edition = "2018"
+name    = "synacor"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+permutohedron = "0.2.4"

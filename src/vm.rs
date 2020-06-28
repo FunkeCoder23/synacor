@@ -445,12 +445,17 @@ impl VM {
                 Opcode::IN => {
                     // //TODO
                     let reg_a = self.next_bits() % 32768;
-                    // print!("> ");
-                    // let _ = io::stdout().flush();
+
                     if input.is_empty() {
+                        print!(">");
+                        let _ = io::stdout().flush();
                         io::stdin()
                             .read_line(&mut input)
                             .expect("Did not enter a correct string");
+                    }
+                    if input == "set teleport" {
+                        self.registers[7] += 1;
+                        input = "use teleport".to_string();
                     }
                     let ch = input.remove(0);
                     if DEBUG {

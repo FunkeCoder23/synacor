@@ -149,3 +149,28 @@ fn test_dump() {
     arch_vm.dump(&mut fileout);
     // println!("{:?}", &buffer[..]);
 }
+
+use permutohedron::heap_recursive;
+#[test]
+fn solve() {
+    let coins: [u16; 5] = [2, 3, 5, 7, 9];
+    let mut o = [0, 1, 2, 3, 4];
+
+    let mut perms = Vec::new();
+    let name = ["red", "corroded", "shiny", "concave", "blue"];
+
+    heap_recursive(&mut o, |permutation| perms.push(permutation.to_vec()));
+    // println!("{:?}", perms[1]);
+    for perm in perms {
+        let res = coins[perm[0]] + coins[perm[1]] * coins[perm[2]].pow(2) + coins[perm[3]].pow(3)
+            - coins[perm[4]];
+        if res == 399 {
+            println!("{}", res);
+            for num in perm.iter() {
+                println!("{}", name[*num]);
+            }
+        }
+    }
+
+    // _ + _ * _^2 + _^3 - _ = 399
+}
