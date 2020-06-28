@@ -16,8 +16,8 @@ fn main() -> std::io::Result<()> {
         // println!("Programming {} into {}", word, i / 2);
         arch_vm.program(word, i / 2);
     }
-    let mut fileout = File::create("challenge2.txt")?;
-    arch_vm.dump(&mut fileout);
+    // let mut fileout = File::create("challenge2.txt")?;
+    // arch_vm.dump(&mut fileout);
     arch_vm.run();
 
     // println!("{:?}", &buffer[..]);

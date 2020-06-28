@@ -5,10 +5,10 @@ use std::fs::File;
 use std::io::Write;
 
 impl vm::VM {
-    pub fn dump(&self, output: &mut File) {
-        let mut file = File::open("debug.txt").unwrap();
+    #[allow(dead_code)]
+    pub fn dump(&mut self, output: &mut File) {
         loop {
-            print!("{}: ", self.pc + 1);
+            write!(output, "{}: ", self.pc).unwrap();
 
             // If our program counter has exceeded the length of the program itself, something has
             // gone awry
@@ -18,116 +18,140 @@ impl vm::VM {
 
             match self.decode_opcode() {
                 Opcode::HALT => {
-                    write!(file, "HLT encountered");
+                    writeln!(output, "HLT").unwrap();
                 }
                 Opcode::SET => {
                     let a = self.next_bits();
                     let b = self.next_bits();
-                    write!(file, format!("SET {} {}", a, b));
+                    writeln!(output, "SET {} {}", a, b).unwrap();
                 }
                 Opcode::PUSH => {
                     let a = self.next_bits();
-                    write!(file, format!("SET {}", a));
+                    writeln!(output, "PUSH {}", a).unwrap();
                 }
                 Opcode::POP => {
                     let a = self.next_bits();
-                    write!(file, format!("SET {}", a));
+                    writeln!(output, "POP {}", a).unwrap();
                 }
                 Opcode::EQ => {
                     let a = self.next_bits();
                     let b = self.next_bits();
                     let c = self.next_bits();
-                    write!(file, format!("SET {} {} {}", a, b, c));
+                    writeln!(output, "EQ {} {} {}", a, b, c).unwrap();
                 }
                 Opcode::GT => {
                     let a = self.next_bits();
                     let b = self.next_bits();
                     let c = self.next_bits();
-                    write!(file, format!("SET {} {} {}", a, b, c));
+                    writeln!(output, "GT {} {} {}", a, b, c).unwrap();
                 }
                 Opcode::JMP => {
                     let a = self.next_bits();
-                    write!(file, format!("SET {}", a));
+                    writeln!(output, "JMP {}", a).unwrap();
                 }
                 Opcode::JNZ => {
                     let a = self.next_bits();
                     let b = self.next_bits();
-                    write!(file, format!("SET {} {}", a, b));
+                    writeln!(output, "JNZ {} {}", a, b).unwrap();
                 }
                 Opcode::JZ => {
                     let a = self.next_bits();
                     let b = self.next_bits();
-                    write!(file, format!("SET {} {}", a, b));
+                    writeln!(output, "JZ {} {}", a, b).unwrap();
                 }
                 Opcode::ADD => {
                     let a = self.next_bits();
                     let b = self.next_bits();
                     let c = self.next_bits();
-                    write!(file, format!("SET {} {} {}", a, b, c));
+                    writeln!(output, "ADD {} {} {}", a, b, c).unwrap();
                 }
                 Opcode::MULT => {
                     let a = self.next_bits();
                     let b = self.next_bits();
                     let c = self.next_bits();
-                    write!(file, format!("SET {} {} {}", a, b, c));
+                    writeln!(output, "MULT {} {} {}", a, b, c).unwrap();
                 }
                 Opcode::MOD => {
                     let a = self.next_bits();
                     let b = self.next_bits();
                     let c = self.next_bits();
-                    write!(file, format!("SET {} {} {}", a, b, c));
+                    writeln!(output, "MOD {} {} {}", a, b, c).unwrap();
                 }
                 Opcode::AND => {
                     let a = self.next_bits();
                     let b = self.next_bits();
                     let c = self.next_bits();
-                    write!(file, format!("SET {} {} {}", a, b, c));
+                    writeln!(output, "AND {} {} {}", a, b, c).unwrap();
                 }
                 Opcode::OR => {
                     let a = self.next_bits();
                     let b = self.next_bits();
                     let c = self.next_bits();
-                    write!(file, format!("SET {} {} {}", a, b, c));
+                    writeln!(output, "OR {} {} {}", a, b, c).unwrap();
                 }
                 Opcode::NOT => {
                     let a = self.next_bits();
                     let b = self.next_bits();
-                    write!(file, format!("SET {} {}", a, b));
+                    writeln!(output, "NOT {} {}", a, b).unwrap();
                 }
                 Opcode::RMEM => {
                     let a = self.next_bits();
                     let b = self.next_bits();
-                    write!(file, format!("SET {} {}", a, b));
+                    writeln!(output, "RMEM {} {}", a, b).unwrap();
                 }
                 Opcode::WMEM => {
                     let a = self.next_bits();
                     let b = self.next_bits();
-                    write!(file, format!("SET {} {}", a, b));
+                    writeln!(output, "WMEM {} {}", a, b).unwrap();
                 }
                 Opcode::CALL => {
                     let a = self.next_bits();
-                    write!(file, format!("SET {}", a));
+                    writeln!(output, "CALL {}", a).unwrap();
                 }
                 Opcode::RET => {
-                    write!(file, format!("RET"));
+                    writeln!(output, "RET").unwrap();
                 }
                 Opcode::OUT => {
                     let a = self.next_bits();
-                    write!(file, format!("SET {}", a));
+                    writeln!(output, "OUT {}", a as u8 as char).unwrap();
                 }
                 Opcode::IN => {
                     let a = self.next_bits();
-                    write!(file, format!("SET {}", a));
+                    writeln!(output, "IN {}", a).unwrap();
                 }
                 Opcode::NOOP => {
-                    write!(file, "NOOP");
+                    writeln!(output, "NOOP").unwrap();
                 }
 
                 val => {
-                    write!(file, "Unrecognized opcode ({:?}) found! Terminating!", val);
+                    writeln!(
+                        output,
+                        "Unrecognized opcode ({:?}) found! Terminating!",
+                        val
+                    )
+                    .unwrap();
                     return;
                 }
             }
         }
     }
+}
+#[allow(unused_imports)]
+use std::io::Read;
+
+#[test]
+fn test_dump() {
+    let mut file = File::open("DONTTOUCH/challenge.bin").unwrap();
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).unwrap();
+    let mut arch_vm = vm::VM::new();
+    //convert [lower, upper] u8 bytes to u16 {upper lower}
+    for i in (0..buffer.len() - 1).step_by(2) {
+        let word = (buffer[i] as u16 & 0x00FF) | (((buffer[i + 1] as u16) << 8) & 0xFF00);
+        // println!("Programming {} into {}", word, i / 2);
+        arch_vm.program(word, i / 2);
+    }
+    // let mut fileout = File::create("challenge2.txt").unwrap();
+    // arch_vm.dump(&mut fileout);
+    // println!("{:?}", &buffer[..]);
 }

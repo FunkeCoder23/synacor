@@ -37,7 +37,7 @@ impl VM {
         let mut input = String::new();
         loop {
             if DEBUG {
-                print!("{}: ", self.pc + 1);
+                print!("{}: ", self.pc);
             }
             // If our program counter has exceeded the length of the program itself, something has
             // gone awry
