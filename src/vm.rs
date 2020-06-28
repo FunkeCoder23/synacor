@@ -453,7 +453,9 @@ impl VM {
                             .expect("Did not enter a correct string");
                     }
                     let ch = input.remove(0);
-                    println!("{}: IN called\n\tStoring {} in {}", self.pc, ch, reg_a);
+                    if DEBUG {
+                        println!("{}: IN called\n\tStoring {} in {}", self.pc, ch, reg_a);
+                    }
                     self.registers[reg_a as usize] = ch as u16;
                 }
                 Opcode::NOOP => {
