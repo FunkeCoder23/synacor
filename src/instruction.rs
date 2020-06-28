@@ -13,22 +13,22 @@ pub enum Opcode {
 
     /// push: 2 a
     ///
-    ///   push \<a> onto the stack
+    ///   push value \<a> onto the stack
     PUSH,
 
     /// pop: 3 a
     ///
-    ///   remove the top element from the stack and write it into \<a>; empty stack = error
+    ///   remove the top element from the stack and write it into register \<a>; empty stack = error
     POP,
 
     /// eq: 4 a b c
     ///
-    ///   set \<a> to 1 if \<b> is equal to \<c>; set it to 0 otherwise
+    ///   set register \<a> to 1 if \<b> is equal to \<c>; set it to 0 otherwise
     EQ,
 
     /// gt: 5 a b c
     ///
-    ///   set \<a> to 1 if \<b> is greater than \<c>; set it to 0 otherwise
+    ///   set register \<a> to 1 if \<b> is greater than \<c>; set it to 0 otherwise
     GT,
 
     /// jmp: 6 a
@@ -36,49 +36,49 @@ pub enum Opcode {
     ///   jump to \<a>
     JMP,
 
-    /// jt: 7 a b
+    /// jnz: 7 a b
     ///
-    ///   if \<a> is nonzero, jump to \<b>
-    JT,
+    ///   if value \<a> is nonzero, jump to \<b>
+    JNZ,
 
-    /// jf: 8 a b
+    /// jz: 8 a b
     ///
-    ///   if \<a> is zero, jump to \<b>
-    JF,
+    ///   if value \<a> is zero, jump to \<b>
+    JZ,
 
     /// add: 9 a b c
     ///
-    ///   assign into \<a> the sum of \<b> and \<c> (modulo 32768)
+    ///   assign into register \<a> the sum of \<b> and \<c> (modulo 32768)
     ADD,
 
     /// mult: 10 a b c
     ///
-    ///   store into \<a> the product of \<b> and \<c> (modulo 32768)
+    ///   store into register \<a> the product of \<b> and \<c> (modulo 32768)
     MULT,
 
     /// mod: 11 a b c
     ///
-    ///   store into \<a> the remainder of \<b> divided by \<c>
+    ///   store into register \<a> the remainder of \<b> divided by \<c>
     MOD,
 
     /// and: 12 a b c
     ///
-    ///   stores into \<a> the bitwise and of \<b> and \<c>
+    ///   stores into register \<a> the bitwise and of \<b> and \<c>
     AND,
 
     /// or: 13 a b c
     ///
-    ///   stores into \<a> the bitwise or of \<b> and \<c>
+    ///   stores into register \<a> the bitwise or of \<b> and \<c>
     OR,
 
     /// not: 14 a b
     ///
-    ///   stores 15-bit bitwise inverse of \<b> in \<a>
+    ///   stores 15-bit bitwise inverse of \<b> in register \<a>
     NOT,
 
     /// rmem: 15 a b
     ///
-    ///   read memory at address \<b> and write it to \<a>
+    ///   read memory at address \<b> and write it to register \<a>
     RMEM,
 
     /// wmem: 16 a b
@@ -88,7 +88,7 @@ pub enum Opcode {
 
     /// call: 17 a
     ///
-    ///   write the address of the next instruction to the stack and jump to \<a>
+    ///   write the address of the next instruction to the stack and jump to value \<a>
     CALL,
 
     /// ret: 18
@@ -139,8 +139,8 @@ impl From<u16> for Opcode {
             4 => return Opcode::EQ,
             5 => return Opcode::GT,
             6 => return Opcode::JMP,
-            7 => return Opcode::JT,
-            8 => return Opcode::JF,
+            7 => return Opcode::JNZ,
+            8 => return Opcode::JZ,
             9 => return Opcode::ADD,
             10 => return Opcode::MULT,
             11 => return Opcode::MOD,

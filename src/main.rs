@@ -5,18 +5,18 @@ pub mod instruction;
 mod vm;
 
 fn main() -> std::io::Result<()> {
-    let mut file = File::open("challenge.bin")?;
+    let mut file = File::open("DONTTOUCH/challenge.bin")?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
     let mut arch_vm = vm::VM::new();
     //convert [lower, upper] u8 bytes to u16 {upper lower}
-
     for i in (0..buffer.len() - 1).step_by(2) {
         let word = (buffer[i] as u16 & 0x00FF) | (((buffer[i + 1] as u16) << 8) & 0xFF00);
-        arch_vm.program(word, i % 2);
+        // println!("Programming {} into {}", word, i / 2);
+        arch_vm.program(word, i / 2);
     }
-    // let mut fileout = File::create("challenge.txt")?;
-    // arch_vm.dump(&mut fileout);
+    let mut fileout = File::create("challenge2.txt")?;
+    arch_vm.dump(&mut fileout);
     arch_vm.run();
 
     // println!("{:?}", &buffer[..]);

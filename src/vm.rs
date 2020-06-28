@@ -36,9 +36,10 @@ impl VM {
     }
 
     pub fn run(&mut self) {
+        let mut input = String::new();
         loop {
             if DEBUG {
-                print!("{}: ", self.pc);
+                print!("{}: ", self.pc + 1);
             }
             // If our program counter has exceeded the length of the program itself, something has
             // gone awry
@@ -87,29 +88,19 @@ impl VM {
                             return;
                         }
                         Some(val) => {
-                            let (is_lit_a, a) = VM::check_num(self.next_bits());
-                            let val_a = if is_lit_a {
-                                a
-                            } else {
-                                self.registers[a as usize]
-                            };
+                            let reg_a = self.next_bits() % 32768;
                             if DEBUG {
-                                println!("POP called\n\tStoring {} in {}({})", val, val_a, a);
+                                println!("POP called\n\tStoring {} in {}", val, reg_a);
                             }
-                            self.registers[val_a as usize] = val;
+                            self.registers[reg_a as usize] = val;
                         }
                     };
                 }
                 Opcode::EQ => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
                     let (is_lit_c, c) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -120,24 +111,21 @@ impl VM {
                     } else {
                         self.registers[b as usize]
                     };
+
                     if DEBUG {
                         println!(
-                            "EQ called\n\tTesting {}({}) == {}({}) and storing in {}({})",
-                            val_b, b, val_c, c, val_a, a
+                            "EQ called\n\tTesting {}({}) == {}({}) and storing in {}",
+                            val_b, b, val_c, c, reg_a
                         )
                     }
-                    self.registers[val_a as usize] = (val_b == val_c) as u16;
+
+                    self.registers[reg_a as usize] = (val_b == val_c) as u16;
                 }
                 Opcode::GT => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
                     let (is_lit_c, c) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -150,11 +138,11 @@ impl VM {
                     };
                     if DEBUG {
                         println!(
-                            "GT called\n\tTesting {}({}) > {}({}) and storing in {}({})",
-                            val_b, b, val_c, c, val_a, a
+                            "GT called\n\tTesting {}({}) > {}({}) and storing in {}",
+                            val_b, b, val_c, c, reg_a
                         )
                     }
-                    self.registers[val_a as usize] = (val_b > val_c) as u16;
+                    self.registers[reg_a as usize] = (val_b > val_c) as u16;
                 }
                 Opcode::JMP => {
                     let (is_lit_a, a) = VM::check_num(self.next_bits());
@@ -168,64 +156,67 @@ impl VM {
                     }
                     self.pc = val_a as usize;
                 }
-                Opcode::JT => {
+                Opcode::JNZ => {
                     let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let (is_lit_b, b) = VM::check_num(self.next_bits());
+
                     let val_a = if is_lit_a {
                         a
                     } else {
                         self.registers[a as usize]
                     };
+                    let val_b = if is_lit_b {
+                        b
+                    } else {
+                        self.registers[b as usize]
+                    };
+
                     if val_a != 0 {
-                        let (is_lit_b, b) = VM::check_num(self.next_bits());
-                        let val_b = if is_lit_b {
-                            b
-                        } else {
-                            self.registers[b as usize]
-                        };
                         if DEBUG {
-                            println!("JT called\n\tPC set to {}({})", val_b, b);
+                            println!(
+                                "JNZ called\n\t{}({}) is nonzero, PC set to {}({})",
+                                val_a, a, val_b, b
+                            );
                         }
                         self.pc = val_b as usize;
                     } else {
                         if DEBUG {
-                            println!("JT called\n\tPC unchanged");
+                            println!("JNZ called\n\t{}({}) is zero, PC unchanged", val_a, a);
                         }
                     }
                 }
-                Opcode::JF => {
+                Opcode::JZ => {
                     let (is_lit_a, a) = VM::check_num(self.next_bits());
                     let val_a = if is_lit_a {
                         a
                     } else {
                         self.registers[a as usize]
                     };
+                    let (is_lit_b, b) = VM::check_num(self.next_bits());
+                    let val_b = if is_lit_b {
+                        b
+                    } else {
+                        self.registers[b as usize]
+                    };
                     if val_a == 0 {
-                        let (is_lit_b, b) = VM::check_num(self.next_bits());
-                        let val_b = if is_lit_b {
-                            b
-                        } else {
-                            self.registers[b as usize]
-                        };
                         if DEBUG {
-                            println!("JF called\n\tPC set to {}({})", val_b, b);
+                            println!(
+                                "JZ called\n\t{}({}) is zero, PC set to {}({})",
+                                val_a, a, val_b, b
+                            );
                         }
                         self.pc = val_b as usize;
                     } else {
                         if DEBUG {
-                            println!("JF called\n\tPC unchanged");
+                            println!("JZ called\n\t{}({}) is nonzero, PC unchanged", val_a, a);
                         }
                     }
                 }
                 Opcode::ADD => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
                     let (is_lit_c, c) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -238,22 +229,17 @@ impl VM {
                     };
                     if DEBUG {
                         println!(
-                            "ADD called\n\tAdding {}({}) and {}({}) and storing in {}({})",
-                            val_b, b, val_c, c, val_a, a
+                            "ADD called\n\tAdding {}({}) and {}({}) and storing in {}",
+                            val_b, b, val_c, c, reg_a
                         )
                     };
-                    self.registers[val_a as usize] = (val_b + val_c) % 32768;
+                    self.registers[reg_a as usize] = (val_b + val_c) % 32768;
                 }
                 Opcode::MULT => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
                     let (is_lit_c, c) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -267,22 +253,17 @@ impl VM {
 
                     if DEBUG {
                         println!(
-                          "MULT called\n\tMultiplying {}({}) and {}({}) (%32768) and storing in {}({})",
-                          val_b, b, val_c, c, val_a,a
+                          "MULT called\n\tMultiplying {}({}) and {}({}) (%32768) and storing in {}",
+                          val_b, b, val_c, c, reg_a
                       );
                     }
-                    self.registers[val_a as usize] = (val_b * val_c) % 32768;
+                    self.registers[reg_a as usize] = (val_b * val_c) % 32768;
                 }
                 Opcode::MOD => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
                     let (is_lit_c, c) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -293,24 +274,21 @@ impl VM {
                     } else {
                         self.registers[c as usize]
                     };
+
                     if DEBUG {
                         println!(
-                            "MOD called\n\tRemainder of {}({}) / {}({}) and storing in {}({})",
-                            val_b, b, val_c, c, val_a, a
+                            "MOD called\n\tRemainder of {}({}) / {}({}) and storing in {}",
+                            val_b, b, val_c, c, reg_a
                         );
                     }
-                    self.registers[val_a as usize] = val_b % val_c;
+
+                    self.registers[reg_a as usize] = val_b % val_c;
                 }
                 Opcode::AND => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
                     let (is_lit_c, c) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -321,24 +299,21 @@ impl VM {
                     } else {
                         self.registers[c as usize]
                     };
+
                     if DEBUG {
                         println!(
-                            "AND called\n\tBitwise AND of {}({}) and {}({}) and storing in {}({})",
-                            val_b, b, val_c, c, val_a, a
+                            "AND called\n\tBitwise AND of {}({}) and {}({}) and storing in {}",
+                            val_b, b, val_c, c, reg_a
                         );
                     }
-                    self.registers[val_a as usize] = val_b & val_c;
+
+                    self.registers[reg_a as usize] = val_b & val_c;
                 }
                 Opcode::OR => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
                     let (is_lit_c, c) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -351,21 +326,16 @@ impl VM {
                     };
                     if DEBUG {
                         println!(
-                            "OR called\n\tBitwise OR of {}({}) and {}({}) and storing in {}({})",
-                            val_b, b, val_c, c, val_a, a
+                            "OR called\n\tBitwise OR of {}({}) and {}({}) and storing in {}",
+                            val_b, b, val_c, c, reg_a
                         );
                     }
-                    self.registers[val_a as usize] = val_b | val_c;
+                    self.registers[reg_a as usize] = val_b | val_c;
                 }
                 Opcode::NOT => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -373,40 +343,30 @@ impl VM {
                     };
                     if DEBUG {
                         println!(
-                            "OR called\n\tComplement of {}({}) and storing in {}({})",
-                            val_b, b, val_a, a
+                            "OR called\n\tComplement of {}({}) and storing in {}",
+                            val_b, b, reg_a
                         );
                     }
-                    self.registers[val_a as usize] = !val_b & 0x7FFF;
+                    self.registers[reg_a as usize] = !val_b & 0x7FFF;
                 }
                 Opcode::RMEM => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b { b } else { self.memory[b as usize] };
 
                     if DEBUG {
                         println!(
-                            "RMEM called\n\tReading mem {}({}) and storing in {}({})",
-                            val_b, b, val_a, a
+                            "RMEM called\n\tReading mem {}({}) and storing in {}",
+                            val_b, b, reg_a
                         );
                     }
-                    self.registers[val_a as usize] = val_b;
+                    self.registers[reg_a as usize] = val_b;
                 }
                 Opcode::WMEM => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let mem_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
 
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
@@ -414,12 +374,9 @@ impl VM {
                     };
 
                     if DEBUG {
-                        println!(
-                            "WMEM called\n\tReading mem {}({}) and storing in {}({})",
-                            val_b, b, val_a, a
-                        );
+                        println!("WMEM called\n\tWriting {}({}) to MEM[{}]", val_b, b, mem_a);
                     }
-                    self.memory[val_a as usize] = val_b;
+                    self.memory[mem_a as usize] = val_b;
                 }
                 Opcode::CALL => {
                     let (is_lit_a, a) = VM::check_num(self.next_bits());
@@ -456,17 +413,26 @@ impl VM {
                     };
                 }
                 Opcode::OUT => {
-                    let ch = self.next_bits() as u8 as char;
+                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+
+                    let val_a = if is_lit_a {
+                        a
+                    } else {
+                        self.registers[a as usize]
+                    };
                     if DEBUG {
-                        print!("OUT called\n\tPrinting {:?} to terminal: ", ch);
+                        print!(
+                            "OUT called\n\tPrinting {:?} to terminal: ",
+                            val_a as u8 as char
+                        );
                     }
-                    print!("{}", ch);
+                    print!("{}", val_a as u8 as char);
                     if DEBUG {
                         println!();
                     }
                 }
                 Opcode::IN => {
-                    let mut input = String::new();
+                    //TODO
                     match io::stdin().read_line(&mut input) {
                         Ok(n) => {
                             println!("{} bytes read", n);
@@ -579,12 +545,12 @@ mod tests {
     fn test_sample_prog() {
         let mut test_vm = VM::new();
         let test_bytes = vec![9, 32768, 32769, 4, 19, 32768];
-        test_vm.registers[0] = 99;
+        test_vm.registers[1] = 99;
         for (i, bytes) in test_bytes.iter().enumerate() {
             test_vm.program(*bytes, i);
         }
         test_vm.run();
         println!("Register 0 is : {}", test_vm.registers[0]);
-        assert_eq!(test_vm.registers[0], 4);
+        assert_eq!(test_vm.registers[0], 103);
     }
 }
