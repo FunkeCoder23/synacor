@@ -8,6 +8,9 @@ const DEBUG: bool = true;
 /// - all numbers are unsigned integers 0..32767 (15-bit)
 /// - all math is modulo 32768; 32758 + 15 => 5
 use crate::instruction::*;
+use std::fs::File;
+use std::io;
+use std::io::Write;
 
 #[allow(dead_code)]
 pub struct VM {
@@ -15,7 +18,6 @@ pub struct VM {
     stack: Vec<u16>,
     memory: [u16; 32768],
     pc: usize,
-    program: Vec<u16>,
 }
 
 #[allow(dead_code)]
@@ -25,13 +27,12 @@ impl VM {
             registers: [0; 8],
             stack: Vec::new(),
             memory: [0; 32768],
-            program: Vec::new(),
             pc: 0,
         }
     }
 
-    pub fn program(&mut self, prog: Vec<u16>) {
-        self.program = prog;
+    pub fn program(&mut self, instruction: u16, i: usize) {
+        self.memory[i] = instruction;
     }
 
     pub fn run(&mut self) {
@@ -41,7 +42,7 @@ impl VM {
             }
             // If our program counter has exceeded the length of the program itself, something has
             // gone awry
-            if self.pc >= self.program.len() {
+            if self.pc >= self.memory.len() {
                 break;
             }
             match self.decode_opcode() {
@@ -50,22 +51,20 @@ impl VM {
                     return;
                 }
                 Opcode::SET => {
-                    let (is_lit_a, a) = VM::check_num(self.next_bits());
+                    let reg_a = self.next_bits() % 32768;
                     let (is_lit_b, b) = VM::check_num(self.next_bits());
-                    let val_a = if is_lit_a {
-                        a
-                    } else {
-                        self.registers[a as usize]
-                    };
                     let val_b = if is_lit_b {
                         b
                     } else {
                         self.registers[b as usize]
                     };
                     if DEBUG {
-                        println!("SET called\n\tstoring {}({}) in {}({})", val_b, b, val_a, a);
+                        println!(
+                            "SET called\n\tstoring {}({}) in register {}",
+                            val_b, b, reg_a
+                        );
                     }
-                    self.registers[val_a as usize] = val_b;
+                    self.registers[reg_a as usize] = val_b;
                 }
                 Opcode::PUSH => {
                     let (is_lit_a, a) = VM::check_num(self.next_bits());
@@ -467,10 +466,19 @@ impl VM {
                     }
                 }
                 Opcode::IN => {
-                    // let (is_lit_a, a) = VM::check_num(self.next_bits());
-                    // let val_a = if is_lit_a { a } else { self.registers[a as usize] };
+                    let mut input = String::new();
+                    match io::stdin().read_line(&mut input) {
+                        Ok(n) => {
+                            println!("{} bytes read", n);
+                            println!("{}", input);
+                        }
+                        Err(error) => println!("error: {}", error),
+                    }
                 }
                 Opcode::NOOP => {
+                    if DEBUG {
+                        println!("NOOP");
+                    }
                     continue;
                 }
 
@@ -498,15 +506,31 @@ impl VM {
         (is_lit, num % 32768)
     }
     fn decode_opcode(&mut self) -> Opcode {
-        let opcode = Opcode::from(self.program[self.pc]);
+        let opcode = Opcode::from(self.memory[self.pc]);
         self.pc += 1;
         return opcode;
     }
 
     fn next_bits(&mut self) -> u16 {
-        let result = self.program[self.pc];
+        let result = self.memory[self.pc];
         self.pc += 1;
         result
+    }
+    pub fn dump(&self, output: &mut File) {
+        for i in 0..self.memory.len() {
+            let word = self.memory[i];
+            let mut text = Vec::new();
+            for ch in format!("{}", word).bytes() {
+                text.push(ch);
+            }
+            output.write(" ".as_bytes()).unwrap();
+            output.write(&text.as_slice()).unwrap();
+            output.write(",\n".as_bytes()).unwrap();
+            // // print!("{},\n", &W(text.clone()));
+            // // for outbyte in outbuffer {
+            // //     fileout.write(&outbuffer).unwrap();
+            // // }
+        }
     }
 }
 
@@ -530,8 +554,10 @@ mod tests {
     #[test]
     fn test_opcode_hlt() {
         let mut test_vm = VM::new();
-        let test_bytes = vec![0, 0, 0, 0];
-        test_vm.program = test_bytes;
+        let test_bytes: Vec<u16> = vec![0, 0, 0, 0];
+        for (i, bytes) in test_bytes.iter().enumerate() {
+            test_vm.program(*bytes, i);
+        }
         test_vm.run();
         assert_eq!(test_vm.pc, 1);
     }
@@ -540,7 +566,9 @@ mod tests {
     fn test_opcode_set() {
         let mut test_vm = VM::new();
         let test_bytes = vec![200, 0, 0, 0];
-        test_vm.program = test_bytes;
+        for (i, bytes) in test_bytes.iter().enumerate() {
+            test_vm.program(*bytes, i);
+        }
         test_vm.run();
         assert_eq!(test_vm.pc, 1);
     }
@@ -551,8 +579,12 @@ mod tests {
     fn test_sample_prog() {
         let mut test_vm = VM::new();
         let test_bytes = vec![9, 32768, 32769, 4, 19, 32768];
-        test_vm.program = test_bytes;
+        test_vm.registers[0] = 99;
+        for (i, bytes) in test_bytes.iter().enumerate() {
+            test_vm.program(*bytes, i);
+        }
         test_vm.run();
-        assert_eq!(test_vm.memory[0], 4);
+        println!("Register 0 is : {}", test_vm.registers[0]);
+        assert_eq!(test_vm.registers[0], 4);
     }
 }
